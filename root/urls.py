@@ -21,5 +21,6 @@ urlpatterns = [
     path('api/', include('myauth.urls')),
     path('api/', include('patient.urls')),
     path('api/auth', include('rest_framework.urls')),
-    path('api/', include('sitter.urls'))
+    path('api/', include('sitter.urls')),
+    path('api/', include('advertisements.urls'))
 ]

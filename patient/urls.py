@@ -15,5 +15,6 @@ urlpatterns = [
     path('cities', views.CityView.as_view()),
     path('cities/<int:pk>', views.CityDeleteView.as_view()),
     path('places', views.PlaceView.as_view()),
-    path('places/<int:pk>', views.PlaceDeleteView.as_view())
+    path('places/<int:pk>', views.PlaceDeleteView.as_view()),
+    path('patients', views.PatientView.as_view())
 ]

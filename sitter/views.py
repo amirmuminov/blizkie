@@ -15,10 +15,11 @@ from myauth.serializers import CustomUserSerializer
 
 class SitterViews(APIView):
     serializer_class = CustomUserSerializer
+    sitter_serializer_class = SitterSerializer
 
     def get(self, request, format=None):
         sitter = Sitter.objects.all().prefetch_related('working_days')
-        serializer = self.serializer_class(sitter, many=True)
+        serializer = self.sitter_serializer_class(sitter, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
@@ -53,24 +54,10 @@ class SitterViews(APIView):
             return Response({"msg": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, format=None):
-        print(request.data)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            sitter = Sitter.objects.get(pk=request.POST["id"])
-            sitter.login = serializer.validated_data.get("login")
-            sitter.password = serializer.validated_data.get("password")
-            sitter.name = serializer.validated_data.get("name")
-            sitter.data_of_birth = serializer.validated_data.get("data_of_birth")
-            sitter.payment = serializer.validated_data.get("payment")
-
-            sitter.save()
-            sitter.working_days.clear()
-            working_days = Day.objects.filter(pk__in=request.POST.getlist("working_days"))
-            for day in working_days:
-                sitter.working_days.add(day)
-
-            response_serializer = self.serializer_class(sitter)
-            return Response(response_serializer.data)
+            sitter = CustomUser.objects.get(username=request.POST.get("username"))
+            print(sitter)
         else:
             return Response({"msg": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -80,5 +67,3 @@ class SitterDeleteView(APIView):
     def delete(self, request, pk, format=None):
         Sitter.objects.get(pk=pk).delete()
         return Response({"success": " one sitter is deleted"}, status=200)
-
-

@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 
-from .models import Meal, Toilet, Mobility, MentalState, LevelSelfServ, City, Place
+from myauth.models import CustomUser
+from .models import Meal, Toilet, Mobility, MentalState, LevelSelfServ, City, Place, Patient
 from .serializers import MealSerializer, ToiletSerializer, MobilitySerializer, MentalStateSerializer, \
     LevelSelfServSerializer, CitySerializer, PlaceSerializer
+from myauth.serializers import CustomUserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -297,3 +299,39 @@ class PlaceDeleteView(APIView):
     def delete(self, request, pk, format=None):
         Place.objects.get(pk=pk).delete()
         return Response({"success": "One place was deleted"}, status=status.HTTP_200_OK)
+
+
+class PatientView(APIView):
+    serializer_class = CustomUserSerializer
+
+    def post(self, request, format=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = CustomUser.objects.create_user(
+                username=serializer.validated_data.get("username"),
+                password=serializer.validated_data.get("password"),
+                first_name=serializer.validated_data.get("first_name"),
+                last_name=serializer.validated_data.get("last_name"),
+                is_sitter=serializer.validated_data.get("is_sitter"),
+                is_patient=serializer.validated_data.get("is_patient"),
+                email=serializer.validated_data.get("email")
+            )
+            user.save()
+
+            patient = Patient(
+                user=user,
+                lss=LevelSelfServ.objects.get(pk=request.POST.get("lss")),
+                ms=MentalState.objects.get(pk=request.POST.get("ms")),
+                mobility=Mobility.objects.get(pk=request.POST.get("mobility")),
+                toilet=Toilet.objects.get(pk=request.POST.get("toilet")),
+                meal=Meal.objects.get(pk=request.POST.get("meal")),
+                city=City.objects.get(pk=request.POST.get("city")),
+                place=Place.objects.get(pk=request.POST.get("place")),
+            )
+
+            patient.save()
+
+            response_serializer = self.serializer_class(user)
+            return Response(response_serializer.data)
+        else:
+            return Response({"msg": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
